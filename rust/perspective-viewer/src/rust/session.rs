@@ -182,12 +182,16 @@ impl Session {
         &self,
         column: &str,
         expression: &JsValue,
+        new_name: Option<String>,
     ) -> ViewConfigUpdate {
         let old_expression = self.metadata().get_expression_by_alias(column).unwrap();
-        let new_name = self
-            .get_validated_expression_name(expression)
-            .await
-            .unwrap();
+        let new_name = if new_name.is_none() {
+            self.get_validated_expression_name(expression)
+                .await
+                .unwrap()
+        } else {
+            new_name.unwrap()
+        };
 
         let expression = expression.as_string().unwrap();
         self.get_view_config().create_replace_expression_update(
@@ -350,6 +354,7 @@ impl Session {
         let table = self.borrow().table.as_ref().unwrap().clone();
         let schema = table.validate_expressions(arr).await?.expression_schema();
         let schema_keys = js_sys::Object::keys(&schema);
+        tracing::info!("get_validated_expression_name: schema_keys: {schema_keys:?}");
         schema_keys.get(0).as_string().into_apierror()
     }
 

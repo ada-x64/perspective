@@ -350,6 +350,7 @@ impl Component for PerspectiveViewer {
                                         presentation = {&ctx.props().presentation}
                                         {selected_column}
                                         on_close = {ctx.link().callback(|_| PerspectiveViewerMsg::ToggleColumnSettings(None, None))}
+                                        on_rename_column = {ctx.link().callback(|locator| PerspectiveViewerMsg::ToggleColumnSettings(Some(locator), None))}
                                     />
                                     <></>
                                 </SplitPanel>

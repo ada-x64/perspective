@@ -47,6 +47,7 @@ impl Tab for ColumnSettingsTab {}
 pub struct ColumnSettingsProps {
     pub selected_column: ColumnLocator,
     pub on_close: Callback<()>,
+    pub on_rename_column: Callback<ColumnLocator>,
     pub session: Session,
     pub renderer: Renderer,
     pub presentation: Presentation,
@@ -86,12 +87,14 @@ pub fn ColumnSettingsSidebar(p: &ColumnSettingsProps) -> Html {
         p.session,
         p.renderer,
         p.presentation,
+        p.on_rename_column,
         column_name
     );
     let match_fn = Callback::from(move |tab| {
         clone!(
             selected_column,
             on_close,
+            on_rename_column,
             session,
             renderer,
             presentation,
@@ -109,6 +112,7 @@ pub fn ColumnSettingsSidebar(p: &ColumnSettingsProps) -> Html {
                         { on_close }
                         { session }
                         { renderer }
+                        { on_rename_column }
                     />
                 }
             }
