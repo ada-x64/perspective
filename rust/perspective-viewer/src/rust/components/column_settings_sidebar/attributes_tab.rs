@@ -12,7 +12,7 @@
 
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_state, use_state_eq, Callback, Html, Properties};
+use yew::{function_component, html, use_state_eq, Callback, Html, Properties};
 
 use crate::components::expression_editor::{get_new_column_name, ExpressionEditor};
 use crate::components::viewer::ColumnLocator;
@@ -24,49 +24,20 @@ use crate::utils::ApiFuture;
 use crate::{clone, derive_model, html_template};
 
 #[derive(PartialEq, Clone, Properties)]
-pub struct AttributesTabProps {
-    pub selected_column: Option<String>,
-    pub on_close: Callback<()>,
-    pub on_rename_column: Callback<ColumnLocator>,
-    pub session: Session,
-    pub renderer: Renderer,
+pub struct RenameExprProps {
+    selected_column: Option<String>,
+    session: Session,
+    update_and_render: Callback<ViewConfigUpdate>,
 }
-derive_model!(Renderer, Session for AttributesTabProps);
+derive_model!(Renderer, Session for RenameExprProps);
 
 #[function_component]
-pub fn AttributesTab(p: &AttributesTabProps) -> Html {
-    tracing::info!("Attributes tab!");
-    let is_validating = yew::use_state_eq(|| false);
-    let on_save = yew::use_callback(
-        |v, p| match &p.selected_column {
-            None => save_expr(v, p),
-            Some(alias) => update_expr(alias, &v, p),
-        },
-        p.clone(),
-    );
-
-    let on_validate = yew::use_callback(
-        |b, validating| {
-            validating.set(b);
-        },
-        is_validating.setter(),
-    );
-
-    let on_delete = yew::use_callback(
-        |(), p| {
-            if let Some(ref s) = p.selected_column {
-                delete_expr(s, p);
-            }
-
-            p.on_close.emit(());
-        },
-        p.clone(),
-    );
-
+pub fn RenameExpr(p: &RenameExprProps) -> Html {
     let default_title = p
         .selected_column
         .clone()
         .unwrap_or_else(|| get_new_column_name(&p.session));
+
     let title = use_state_eq(|| default_title.clone());
 
     let on_change_title = {
@@ -107,43 +78,103 @@ pub fn AttributesTab(p: &AttributesTabProps) -> Html {
         )
     };
 
+    html! {
+        <div>
+            <label class="item_title" for="column-name">{"Column Name"}</label>
+            <input onchange={on_change_title} type="text" id="column-name" value={(*title).clone()}/>
+            <button type="button" onclick={on_reset_title}>{"Reset"}</button>
+            <button type="button" onclick={on_save_title}>{"Save"}</button>
+        </div>
+    }
+}
+fn rename_expr(
+    old_name: String,
+    new_name: String,
+    session: Session,
+    update_and_render: Callback<ViewConfigUpdate>,
+) {
+    let exp = session
+        .metadata()
+        .get_expression_by_alias(&old_name)
+        .unwrap();
+    clone!(old_name, new_name);
+    ApiFuture::spawn(async move {
+        let update = session
+            .create_replace_expression_update(&old_name, &JsValue::from(exp), Some(new_name))
+            .await;
+        update_and_render.emit(update);
+
+        Ok(())
+    });
+}
+
+#[derive(PartialEq, Clone, Properties)]
+pub struct AttributesTabProps {
+    pub selected_column: Option<String>,
+    pub on_close: Callback<()>,
+    pub on_rename_column: Callback<ColumnLocator>,
+    pub session: Session,
+    pub renderer: Renderer,
+}
+derive_model!(Renderer, Session for AttributesTabProps);
+#[function_component]
+pub fn AttributesTab(p: &AttributesTabProps) -> Html {
+    let is_validating = yew::use_state_eq(|| false);
+    let on_save = yew::use_callback(
+        |v, p| match &p.selected_column {
+            None => save_expr(v, p),
+            Some(alias) => update_expr(alias, &v, p),
+        },
+        p.clone(),
+    );
+
+    let on_validate = yew::use_callback(
+        |b, validating| {
+            validating.set(b);
+        },
+        is_validating.setter(),
+    );
+
+    let on_delete = yew::use_callback(
+        |(), p| {
+            if let Some(ref s) = p.selected_column {
+                delete_expr(s, p);
+            }
+
+            p.on_close.emit(());
+        },
+        p.clone(),
+    );
+
+    let update_and_render = yew::use_callback(
+        |update: ViewConfigUpdate, p| ApiFuture::spawn(async { p.update_and_render(update).await }),
+        p.clone(),
+    );
+
+    clone!(
+        p.renderer,
+        p.session,
+        alias = p.selected_column,
+        p.selected_column
+    );
+
     html_template! {
         <div id="attributes-tab">
-            <button type="button">{"random button"}</button>
-            <div>
-                <label class="item_title" for="column-name">{"Column Name"}</label>
-                <input onchange={on_change_title} type="text" id="column-name" value={(*title).clone()}/>
-                <button type="button" onclick={on_reset_title}>{"Reset"}</button>
-                <button type="button" onclick={on_save_title}>{"Save"}</button>
-            </div>
+            <RenameExpr
+                { selected_column }
+                { update_and_render }
+                session = { &session }
+            />
             <div class="item_title">{"Expression Editor"}</div>
             <ExpressionEditor
                 { on_save }
                 { on_validate }
                 { on_delete }
-                session = { &p.session }
-                alias = { p.selected_column.clone() }
+                { session }
+                { alias }
             />
         </div>
     }
-}
-
-fn rename_expr(old_name: String, new_name: String, props: &AttributesTabProps) {
-    let sesh = props.session.clone();
-    let exp = sesh.metadata().get_expression_by_alias(&old_name).unwrap();
-    clone!(old_name, new_name, props);
-    ApiFuture::spawn(async move {
-        let update = sesh
-            .create_replace_expression_update(
-                &old_name,
-                &JsValue::from(exp),
-                Some(new_name.clone()),
-            )
-            .await;
-        props.update_and_render(update).await?;
-
-        Ok(())
-    });
 }
 
 fn update_expr(name: &str, new_expression: &JsValue, props: &AttributesTabProps) {
