@@ -111,7 +111,7 @@ impl Component for PerspectiveViewer {
                 } else {
                     vec![
                         PerspectiveViewerMsg::RenderLimits(Some(x)),
-                        PerspectiveViewerMsg::ToggleColumnSettings(None, None),
+                        // PerspectiveViewerMsg::ToggleColumnSettings(None, None),
                     ]
                 }
             });

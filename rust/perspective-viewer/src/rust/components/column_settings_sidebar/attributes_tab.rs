@@ -38,13 +38,9 @@ pub fn AttributesTab(p: &AttributesTabProps) -> Html {
     tracing::info!("Attributes tab!");
     let is_validating = yew::use_state_eq(|| false);
     let on_save = yew::use_callback(
-        |v, p| {
-            match &p.selected_column {
-                None => save_expr(v, p),
-                Some(alias) => update_expr(alias, &v, p),
-            }
-
-            p.on_close.emit(());
+        |v, p| match &p.selected_column {
+            None => save_expr(v, p),
+            Some(alias) => update_expr(alias, &v, p),
         },
         p.clone(),
     );
@@ -113,6 +109,7 @@ pub fn AttributesTab(p: &AttributesTabProps) -> Html {
 
     html_template! {
         <div id="attributes-tab">
+            <button type="button">{"random button"}</button>
             <div>
                 <label class="item_title" for="column-name">{"Column Name"}</label>
                 <input onchange={on_change_title} type="text" id="column-name" value={(*title).clone()}/>
@@ -144,9 +141,6 @@ fn rename_expr(old_name: String, new_name: String, props: &AttributesTabProps) {
             )
             .await;
         props.update_and_render(update).await?;
-        props
-            .on_rename_column
-            .emit(ColumnLocator::Expr(Some(new_name)));
 
         Ok(())
     });
@@ -165,6 +159,7 @@ fn update_expr(name: &str, new_expression: &JsValue, props: &AttributesTabProps)
 }
 
 fn save_expr(expression: JsValue, props: &AttributesTabProps) {
+    tracing::info!("save_expr");
     let task = {
         let expression = expression.as_string().unwrap();
         let mut expressions = props.session.get_view_config().expressions.clone();
