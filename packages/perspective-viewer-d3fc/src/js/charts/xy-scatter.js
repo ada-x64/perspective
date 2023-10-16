@@ -11,6 +11,7 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 import * as fc from "d3fc";
+import { select } from "d3";
 import { axisFactory } from "../axis/axisFactory";
 import { chartCanvasFactory } from "../axis/chartFactory";
 import {
@@ -32,6 +33,7 @@ import { hardLimitZeroPadding } from "../d3fc/padding/hardLimitZero";
 import zoomableChart from "../zoom/zoomableChart";
 import nearbyTip from "../tooltip/nearbyTip";
 import { symbolsObj } from "../series/seriesSymbols";
+import { gridLayoutMultiChart } from "../layout/gridLayoutMultiChart";
 
 /**
  * Define a clamped scaling factor based on the container size for bubble plots.
@@ -99,14 +101,11 @@ function overrideSymbols(settings, symbols) {
  * @param {d3.Selection} container - d3.Selection of the outer div
  * @param {any} settings - settings as defined in the Update method in plugin.js
  */
-function xyScatter(container, settings) {
+function xyScatterSingle(container, settings, data) {
     const colorBy = settings.realValues[2];
     let hasColorBy = !!colorBy;
-    let isColoredByString =
-        settings.mainValues.find((x) => x.name === colorBy)?.type === "string";
 
     let color = null;
-    let legend = null;
 
     const symbolCol = settings.realValues[4];
     const symbols = overrideSymbols(
@@ -114,26 +113,7 @@ function xyScatter(container, settings) {
         symbolTypeFromColumn(settings, symbolCol)
     );
 
-    const data = pointData(settings, filterDataByGroup(settings));
-
-    if (hasColorBy && isColoredByString) {
-        if (!!symbolCol) {
-            // TODO: Legend should have cartesian product labels (ColorBy|SplitBy)
-            // For now, just use monocolor legends.
-            color = seriesColorsFromDistinct(settings, data);
-            legend = symbolLegend().settings(settings).scale(symbols);
-        } else {
-            color = seriesColorsFromColumn(settings, colorBy);
-            legend = colorLegend().settings(settings).scale(color);
-        }
-    } else if (hasColorBy) {
-        color = seriesColorRange(settings, data, "colorValue");
-        legend = colorRangeLegend().scale(color);
-    } else {
-        // always use default color
-        color = colorScale().settings(settings).domain([""])();
-        legend = symbolLegend().settings(settings).scale(symbols);
-    }
+    // const data = pointData(settings, filterDataByGroup(settings));
 
     const size = settings.realValues[3]
         ? seriesLinearRange(settings, data, "size").range([10, 10000])
@@ -177,8 +157,8 @@ function xyScatter(container, settings) {
         .valueName("y")(data);
 
     const chart = chartCanvasFactory(xAxis, yAxis)
-        .xLabel(settings.mainValues[0].name)
-        .yLabel(settings.mainValues[1].name)
+        .xLabel("")
+        .yLabel("")
         .plotArea(withGridLines(series, settings).canvas(true));
 
     chart.xNice && chart.xNice();
@@ -206,7 +186,86 @@ function xyScatter(container, settings) {
     // render
     container.datum(data).call(zoomChart);
     container.call(toolTip);
-    if (legend) container.call(legend);
+}
+function xyScatter(container, settings) {
+    const colorBy = settings.realValues[2];
+    let hasColorBy = !!colorBy;
+    let isColoredByString =
+        settings.mainValues.find((x) => x.name === colorBy)?.type === "string";
+
+    let color = null;
+    let legend = null;
+
+    const symbolCol = settings.realValues[4];
+    const symbols = overrideSymbols(
+        settings,
+        symbolTypeFromColumn(settings, symbolCol)
+    );
+
+    const data = pointData(settings, filterDataByGroup(settings));
+
+    if (hasColorBy && isColoredByString) {
+        if (!!symbolCol) {
+            // TODO: Legend should have cartesian product labels (ColorBy|SplitBy)
+            // For now, just use monocolor legends.
+            color = seriesColorsFromDistinct(settings, data);
+            legend = symbolLegend().settings(settings).scale(symbols);
+        } else {
+            color = seriesColorsFromColumn(settings, colorBy);
+            legend = colorLegend().settings(settings).scale(color);
+        }
+    } else if (hasColorBy) {
+        color = seriesColorRange(settings, data, "colorValue");
+        legend = colorRangeLegend().scale(color);
+    } else {
+        // always use default color
+        color = colorScale().settings(settings).domain([""])();
+        legend = symbolLegend().settings(settings).scale(symbols);
+    }
+
+    const axisDefault = () =>
+        axisFactory(settings)
+            .settingName("mainValues")
+            .paddingStrategy(hardLimitZeroPadding())
+            .pad([0.1, 0.1]);
+
+    const xAxis = axisDefault()
+        .settingValue(settings.mainValues[0].name)
+        .memoValue(settings.axisMemo[0])
+        .valueName("x")(data);
+
+    const yAxis = axisDefault()
+        .orient("vertical")
+        .settingValue(settings.mainValues[1].name)
+        .memoValue(settings.axisMemo[1])
+        .valueName("y")(data);
+
+    const xyGrid = gridLayoutMultiChart()
+        .svg(false)
+        .elementsPrefix("xy-scatter");
+    container.datum(data).call(xyGrid);
+
+    const xyContainer = xyGrid.chartContainer();
+    const xyEnter = xyGrid.chartEnter();
+    const xyDiv = xyGrid.chartDiv();
+    const xyTitle = xyGrid.chartTitle();
+    const containerSize = xyGrid.containerSize();
+
+    if (legend) xyContainer.call(legend);
+
+    xyTitle.each((d, i, nodes) => select(nodes[i]).text(d.key));
+    xyEnter
+        .merge(xyDiv)
+        .attr(
+            "transform",
+            `translate(${containerSize.width / 2}, ${containerSize.height / 2})`
+        )
+        .each(function (data) {
+            const xyElement = select(this);
+            xyScatterSingle(xyElement, settings, data);
+
+            // TODO: chart series
+        });
 }
 
 xyScatter.plugin = {

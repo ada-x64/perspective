@@ -21,6 +21,7 @@ export function gridLayoutMultiChart() {
     let chartTitle = null;
     let color = null;
     let containerSize = null;
+    let svg = true;
 
     const _gridLayoutMultiChart = (container) => {
         const innerContainer = getOrCreateElement(
@@ -90,10 +91,24 @@ export function gridLayoutMultiChart() {
             .attr("class", "title")
             .style("text-align", "left");
 
-        chartContainer = chartEnter
-            .append("svg")
-            .append("g")
-            .attr("class", elementsPrefix);
+        if (svg) {
+            chartContainer = chartEnter
+                .append("svg")
+                .append("g")
+                .attr("class", elementsPrefix);
+        } else {
+            chartContainer = chartEnter
+                .append("div")
+                .attr("class", elementsPrefix);
+        }
+    };
+
+    _gridLayoutMultiChart.svg = (...args) => {
+        if (!args.length) {
+            return svg;
+        }
+        svg = args[0];
+        return _gridLayoutMultiChart;
     };
 
     _gridLayoutMultiChart.elementsPrefix = (...args) => {
