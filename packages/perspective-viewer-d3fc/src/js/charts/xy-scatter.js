@@ -34,24 +34,7 @@ import zoomableChart from "../zoom/zoomableChart";
 import nearbyTip from "../tooltip/nearbyTip";
 import { symbolsObj } from "../series/seriesSymbols";
 import { gridLayoutMultiChart } from "../layout/gridLayoutMultiChart";
-
-/**
- * Define a clamped scaling factor based on the container size for bubble plots.
- *
- * @param {Array} p1 a point as a tuple of `Number`
- * @param {Array} p2 a second point as a tuple of `Number`
- * @returns a function `container -> integer` which calculates a scaling factor
- * from the linear function (clamped) defgined by the input points
- */
-function interpolate_scale([x1, y1], [x2, y2]) {
-    const m = (y2 - y1) / (x2 - x1);
-    const b = y2 - m * x2;
-    return function (container) {
-        const node = container.node();
-        const shortest_axis = Math.min(node.clientWidth, node.clientHeight);
-        return Math.min(y2, Math.max(y1, m * shortest_axis + b));
-    };
-}
+import xyScatterSeries from "../series/xy-scatter/xyScatterSeries";
 
 /**
  * Overrides specific symbols based on plugin settings. This modifies in-place _and_ returns the value.
@@ -97,96 +80,6 @@ function overrideSymbols(settings, symbols) {
     return symbols;
 }
 
-/**
- * @param {d3.Selection} container - d3.Selection of the outer div
- * @param {any} settings - settings as defined in the Update method in plugin.js
- */
-function xyScatterSingle(container, settings, data) {
-    const colorBy = settings.realValues[2];
-    let hasColorBy = !!colorBy;
-
-    let color = null;
-
-    const symbolCol = settings.realValues[4];
-    const symbols = overrideSymbols(
-        settings,
-        symbolTypeFromColumn(settings, symbolCol)
-    );
-
-    // const data = pointData(settings, filterDataByGroup(settings));
-
-    const size = settings.realValues[3]
-        ? seriesLinearRange(settings, data, "size").range([10, 10000])
-        : null;
-
-    const label = settings.realValues[5];
-
-    const scale_factor = interpolate_scale([600, 0.1], [1600, 1])(container);
-    const series = fc
-        .seriesCanvasMulti()
-        .mapping((data, index) => data[index])
-        .series(
-            data.map((series) =>
-                pointSeriesCanvas(
-                    settings,
-                    symbolCol,
-                    size,
-                    color,
-                    label,
-                    symbols,
-                    scale_factor
-                )
-            )
-        );
-
-    const axisDefault = () =>
-        axisFactory(settings)
-            .settingName("mainValues")
-            .paddingStrategy(hardLimitZeroPadding())
-            .pad([0.1, 0.1]);
-
-    const xAxis = axisDefault()
-        .settingValue(settings.mainValues[0].name)
-        .memoValue(settings.axisMemo[0])
-        .valueName("x")(data);
-
-    const yAxis = axisDefault()
-        .orient("vertical")
-        .settingValue(settings.mainValues[1].name)
-        .memoValue(settings.axisMemo[1])
-        .valueName("y")(data);
-
-    const chart = chartCanvasFactory(xAxis, yAxis)
-        .xLabel("")
-        .yLabel("")
-        .plotArea(withGridLines(series, settings).canvas(true));
-
-    chart.xNice && chart.xNice();
-    chart.yNice && chart.yNice();
-
-    const zoomChart = zoomableChart()
-        .chart(chart)
-        .settings(settings)
-        .xScale(xAxis.scale)
-        .yScale(yAxis.scale)
-        .canvas(true);
-
-    const toolTip = nearbyTip()
-        .scaleFactor(scale_factor)
-        .settings(settings)
-        .canvas(true)
-        .xScale(xAxis.scale)
-        .xValueName("x")
-        .yValueName("y")
-        .yScale(yAxis.scale)
-        .color(!hasColorBy && color)
-        .size(size)
-        .data(data);
-
-    // render
-    container.datum(data).call(zoomChart);
-    container.call(toolTip);
-}
 function xyScatter(container, settings) {
     const colorBy = settings.realValues[2];
     let hasColorBy = !!colorBy;
@@ -229,6 +122,7 @@ function xyScatter(container, settings) {
             .paddingStrategy(hardLimitZeroPadding())
             .pad([0.1, 0.1]);
 
+    // TODO: Axis labels on the grid
     const xAxis = axisDefault()
         .settingValue(settings.mainValues[0].name)
         .memoValue(settings.axisMemo[0])
@@ -251,6 +145,7 @@ function xyScatter(container, settings) {
     const xyTitle = xyGrid.chartTitle();
     const containerSize = xyGrid.containerSize();
 
+    // TODO: This isn't rendering
     if (legend) xyContainer.call(legend);
 
     xyTitle.each((d, i, nodes) => select(nodes[i]).text(d.key));
@@ -262,9 +157,11 @@ function xyScatter(container, settings) {
         )
         .each(function (data) {
             const xyElement = select(this);
-            xyScatterSingle(xyElement, settings, data);
-
-            // TODO: chart series
+            xyScatterSeries()
+                .settings(settings)
+                .data(data)
+                .color(color)
+                .symbols(symbols)(xyElement);
         });
 }
 
