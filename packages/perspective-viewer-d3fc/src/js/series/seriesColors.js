@@ -21,7 +21,17 @@ export function seriesColors(settings) {
 }
 
 export function seriesColorsFromColumn(settings, column) {
-    const data = settings.data.map((row) => row[column]);
+    const data = settings.data
+        .map((row) => {
+            let a = Object.entries(row)
+                .filter(([k, v]) => {
+                    let split = k.split("|").at(-1);
+                    return split === column && !!v;
+                })
+                .map(([k, v]) => v);
+            return a;
+        })
+        .flat();
     const domain = [...new Set(data)].sort();
     return colorScale().settings(settings).domain(domain)();
 }

@@ -159,7 +159,7 @@ function xyScatter(container, settings) {
             const xyElement = select(this);
             xyScatterSeries()
                 .settings(settings)
-                .data(data)
+                .data([data])
                 .color(color)
                 .symbols(symbols)(xyElement);
         });

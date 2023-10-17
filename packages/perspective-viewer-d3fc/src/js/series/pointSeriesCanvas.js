@@ -51,8 +51,8 @@ export function pointSeriesCanvas(
         series.size((d) => Math.round(scale_factor * size(d.size)));
     }
 
-    series.decorate((context, d) => {
-        const colorValue = color(d.colorValue);
+    series.decorate((context, data) => {
+        const colorValue = color(data.colorValue);
         const opacity = settings.colorStyles?.opacity;
         if (label) {
             const { type } = settings.mainValues.find((x) => x.name === label);

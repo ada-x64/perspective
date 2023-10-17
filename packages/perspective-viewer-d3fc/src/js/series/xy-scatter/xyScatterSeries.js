@@ -131,7 +131,7 @@ export default function xyScatterSeries() {
             .data(data);
 
         // render
-        container.datum(data.map((d) => [d])).call(zoomChart);
+        container.datum(data).call(zoomChart);
         container.call(toolTip);
     };
 
