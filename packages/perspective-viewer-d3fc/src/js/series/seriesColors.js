@@ -12,6 +12,7 @@
 
 import * as d3 from "d3";
 import { groupFromKey } from "./seriesKey";
+import { getValuesByColumn } from "../data/utils";
 
 export function seriesColors(settings) {
     const col =
@@ -21,17 +22,7 @@ export function seriesColors(settings) {
 }
 
 export function seriesColorsFromColumn(settings, column) {
-    const data = settings.data
-        .map((row) => {
-            let a = Object.entries(row)
-                .filter(([k, v]) => {
-                    let split = k.split("|").at(-1);
-                    return split === column && !!v;
-                })
-                .map(([k, v]) => v);
-            return a;
-        })
-        .flat();
+    const data = getValuesByColumn(settings, column);
     const domain = [...new Set(data)].sort();
     return colorScale().settings(settings).domain(domain)();
 }

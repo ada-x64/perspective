@@ -101,7 +101,11 @@ function xyScatter(container, settings) {
         if (!!symbolCol) {
             // TODO: Legend should have cartesian product labels (ColorBy|SplitBy)
             // For now, just use monocolor legends.
-            color = seriesColorsFromDistinct(settings, data);
+            if (settings.splitValues.length > 0) {
+                color = seriesColorsFromDistinct(settings, data);
+            } else {
+                color = seriesColorsFromDistinct(settings, data[0]);
+            }
             legend = symbolLegend().settings(settings).scale(symbols);
         } else {
             color = seriesColorsFromColumn(settings, colorBy);
