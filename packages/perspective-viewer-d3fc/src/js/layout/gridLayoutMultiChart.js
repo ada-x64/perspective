@@ -28,19 +28,19 @@ export function gridLayoutMultiChart() {
         const outerContainer = getOrCreateElement(
             container,
             "div.outer-container",
-            () => container.append("div").attr("class", "outer-container")
+            () =>
+                container
+                    .append("div")
+                    .attr("class", "outer-container")
+                    .style("width", `calc(100% - ${padding ?? 0})`)
+                    .style("height", `calc(100% - ${padding ?? 0})`)
+                    .style("padding-left", padding ?? 0)
         );
 
         const scrollContainer = getOrCreateElement(
             outerContainer,
             "div.inner-container",
-            () =>
-                outerContainer
-                    .append("div")
-                    .attr("class", "inner-container")
-                    .style("width", `calc(100% - ${padding ?? 0})`)
-                    .style("height", `calc(100% - ${padding ?? 0})`)
-                    .style("padding-left", padding ?? 0)
+            () => outerContainer.append("div").attr("class", "inner-container")
         );
 
         const innerRect = outerContainer.node().getBoundingClientRect();
