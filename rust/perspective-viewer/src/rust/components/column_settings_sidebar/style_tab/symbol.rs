@@ -77,7 +77,7 @@ impl yew::Component for SymbolAttr {
                     .map(|s| s.symbols)
             })
             .unwrap_or_default();
-        pairs.push(KVPair::new(None, all_symbol_names.first().cloned()));
+        pairs.push(KVPair::new(None, None));
         let row_dropdown = Rc::new(FilterDropDownElement::new(p.session.clone()));
         Self {
             pairs,
@@ -95,6 +95,7 @@ impl yew::Component for SymbolAttr {
                     .filter(|KVPair { key, .. }| key.is_some())
                     .cloned()
                     .collect();
+
                 p.send_plugin_config(
                     p.column_name.clone(),
                     serde_json::to_value(SymbolConfig {
@@ -102,13 +103,15 @@ impl yew::Component for SymbolAttr {
                     })
                     .unwrap(),
                 );
+
                 if new_pairs
                     .last()
                     .map(|pair| pair.key.is_some())
                     .unwrap_or_default()
                 {
-                    new_pairs.push(KVPair::new(None, self.all_symbol_names.first().cloned()))
+                    new_pairs.push(KVPair::new(None, None))
                 }
+
                 self.pairs = new_pairs;
                 true
             }
@@ -117,17 +120,17 @@ impl yew::Component for SymbolAttr {
 
     fn view(&self, ctx: &yew::Context<Self>) -> Html {
         let update_pairs = ctx.link().callback(SymbolAttrMsg::UpdatePairs);
+        tracing::error!("{:?}", self.pairs);
         html_template! {
-            <LocalStyle href={css!("column-symbol-attributes")} />
+            <LocalStyle href={ css!("column-symbol-attributes") } />
             <PairsList
-                title={ "Symbols" }
-                id = {"attributes-symbols"}
-                pairs={self.pairs.clone()}
-                row_dropdown={self.row_dropdown.clone()}
-                values={ctx.props().attrs.symbols.clone()}
-                column_name={ctx.props().column_name.clone()}
-                {update_pairs}
-            />
+                title="Symbols"
+                id="attributes-symbols"
+                pairs={ self.pairs.clone() }
+                row_dropdown={ self.row_dropdown.clone() }
+                values={ ctx.props().attrs.symbols.clone() }
+                column_name={ ctx.props().column_name.clone() }
+                { update_pairs }/>
         }
     }
 }
