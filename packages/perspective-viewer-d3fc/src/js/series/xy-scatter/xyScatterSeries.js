@@ -169,10 +169,5 @@ export default function xyScatterSeries() {
         return _xyScatterSeries;
     };
 
-    // mk_get_set("settings", settings);
-    // mk_get_set("data", data);
-    // mk_get_set("color", color);
-    // mk_get_set("symbols", symbols);
-
     return _xyScatterSeries;
 }

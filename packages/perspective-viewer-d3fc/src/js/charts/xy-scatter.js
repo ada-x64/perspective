@@ -126,32 +126,15 @@ function xyScatter(container, settings) {
             .elementsPrefix("xy-scatter");
         xyGrid = xyGrid.padding("2.5em");
 
-        const xLabel = container.append("div");
-        xLabel
-            .style("position", "absolute")
-            .style("bottom", 0)
-            .style("height", "2.5em")
-            .style("width", "100%")
-            .style("display", "flex")
-            .style("justify-content", "center")
-            .style("align-items", "center")
-            .style("background", "var(--d3fc-legend--background)");
+        const xLabel = container.append("div").attr("class", "multi-xlabel");
         xLabel.append("p").text(settings.mainValues[0].name);
 
-        const yLabel = container.append("div");
-        yLabel
-            .style("position", "absolute")
-            .style("top", 0)
-            .style("width", "2.5em")
-            .style("height", "100%")
-            .style("display", "flex")
-            .style("justify-content", "center")
-            .style("align-items", "center")
-            .style("background", "var(--d3fc-legend--background)");
+        const yLabel = container.append("div").attr("class", "multi-ylabel");
         yLabel
             .append("p")
             .text(settings.mainValues[1].name)
-            .style("transform", "rotate(-90deg)");
+            .style("transform", "rotate(-90deg)")
+            .style("text-wrap", "nowrap");
 
         container = container.datum(data);
         container.call(xyGrid);
