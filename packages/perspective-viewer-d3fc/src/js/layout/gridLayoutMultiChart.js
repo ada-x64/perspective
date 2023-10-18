@@ -22,15 +22,28 @@ export function gridLayoutMultiChart() {
     let color = null;
     let containerSize = null;
     let svg = true;
+    let padding = null;
 
     const _gridLayoutMultiChart = (container) => {
-        const innerContainer = getOrCreateElement(
+        const outerContainer = getOrCreateElement(
             container,
-            "div.inner-container",
-            () => container.append("div").attr("class", "inner-container")
+            "div.outer-container",
+            () => container.append("div").attr("class", "outer-container")
         );
 
-        const innerRect = innerContainer.node().getBoundingClientRect();
+        const scrollContainer = getOrCreateElement(
+            outerContainer,
+            "div.inner-container",
+            () =>
+                outerContainer
+                    .append("div")
+                    .attr("class", "inner-container")
+                    .style("width", `calc(100% - ${padding ?? 0})`)
+                    .style("height", `calc(100% - ${padding ?? 0})`)
+                    .style("padding-left", padding ?? 0)
+        );
+
+        const innerRect = outerContainer.node().getBoundingClientRect();
         const containerHeight = innerRect.height;
         const containerWidth = innerRect.width - (color ? 70 : 0);
 
@@ -59,20 +72,20 @@ export function gridLayoutMultiChart() {
         }
 
         if (data.length > 1) {
-            innerContainer.style(
+            scrollContainer.style(
                 "grid-template-columns",
                 `repeat(${cols}, ${100 / cols}%)`
             );
-            innerContainer.style(
+            scrollContainer.style(
                 "grid-template-rows",
                 `repeat(${rows}, ${containerSize.height}px)`
             );
         } else {
-            innerContainer.style("grid-template-columns", `repeat(1, 100%)`);
-            innerContainer.style("grid-template-rows", `repeat(1, 100%)`);
+            scrollContainer.style("grid-template-columns", `repeat(1, 100%)`);
+            scrollContainer.style("grid-template-rows", `repeat(1, 100%)`);
         }
 
-        chartDiv = innerContainer
+        chartDiv = scrollContainer
             .selectAll(`div.${elementsPrefix}-container`)
             .data(data, (d) => d.split);
         chartDiv.exit().remove();
@@ -102,7 +115,13 @@ export function gridLayoutMultiChart() {
                 .attr("class", elementsPrefix);
         }
     };
-
+    _gridLayoutMultiChart.padding = (...args) => {
+        if (!args.length) {
+            return padding;
+        }
+        padding = args[0];
+        return _gridLayoutMultiChart;
+    };
     _gridLayoutMultiChart.svg = (...args) => {
         if (!args.length) {
             return svg;

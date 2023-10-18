@@ -120,53 +120,73 @@ function xyScatter(container, settings) {
         legend = symbolLegend().settings(settings).scale(symbols);
     }
 
-    const axisDefault = () =>
-        axisFactory(settings)
-            .settingName("mainValues")
-            .paddingStrategy(hardLimitZeroPadding())
-            .pad([0.1, 0.1]);
+    if (settings.splitValues.length !== 0) {
+        let xyGrid = gridLayoutMultiChart()
+            .svg(false)
+            .elementsPrefix("xy-scatter");
+        xyGrid = xyGrid.padding("2.5em");
 
-    // TODO: Axis labels on the grid
-    const xAxis = axisDefault()
-        .settingValue(settings.mainValues[0].name)
-        .memoValue(settings.axisMemo[0])
-        .valueName("x")(data);
+        const xLabel = container.append("div");
+        xLabel
+            .style("position", "absolute")
+            .style("bottom", 0)
+            .style("height", "2.5em")
+            .style("width", "100%")
+            .style("display", "flex")
+            .style("justify-content", "center")
+            .style("align-items", "center")
+            .style("background", "var(--d3fc-legend--background)");
+        xLabel.append("p").text(settings.mainValues[0].name);
 
-    const yAxis = axisDefault()
-        .orient("vertical")
-        .settingValue(settings.mainValues[1].name)
-        .memoValue(settings.axisMemo[1])
-        .valueName("y")(data);
+        const yLabel = container.append("div");
+        yLabel
+            .style("position", "absolute")
+            .style("top", 0)
+            .style("width", "2.5em")
+            .style("height", "100%")
+            .style("display", "flex")
+            .style("justify-content", "center")
+            .style("align-items", "center")
+            .style("background", "var(--d3fc-legend--background)");
+        yLabel
+            .append("p")
+            .text(settings.mainValues[1].name)
+            .style("transform", "rotate(-90deg)");
 
-    const xyGrid = gridLayoutMultiChart()
-        .svg(false)
-        .elementsPrefix("xy-scatter");
-    container.datum(data).call(xyGrid);
+        container = container.datum(data);
+        container.call(xyGrid);
+        const xyContainer = xyGrid.chartContainer();
+        const xyEnter = xyGrid.chartEnter();
+        const xyDiv = xyGrid.chartDiv();
+        const xyTitle = xyGrid.chartTitle();
+        const containerSize = xyGrid.containerSize();
 
-    const xyContainer = xyGrid.chartContainer();
-    const xyEnter = xyGrid.chartEnter();
-    const xyDiv = xyGrid.chartDiv();
-    const xyTitle = xyGrid.chartTitle();
-    const containerSize = xyGrid.containerSize();
+        xyTitle.each((d, i, nodes) => select(nodes[i]).text(d.key));
+        xyEnter
+            .merge(xyDiv)
+            .attr(
+                "transform",
+                `translate(${containerSize.width / 2}, ${
+                    containerSize.height / 2
+                })`
+            )
+            .each(function (data) {
+                const xyElement = select(this);
+                xyScatterSeries()
+                    .settings(settings)
+                    .data([data])
+                    .color(color)
+                    .symbols(symbols)(xyElement);
+            });
+    } else {
+        xyScatterSeries()
+            .settings(settings)
+            .data(data)
+            .color(color)
+            .symbols(symbols)(container);
+    }
 
-    // TODO: This isn't rendering
-    if (legend) xyContainer.call(legend);
-
-    xyTitle.each((d, i, nodes) => select(nodes[i]).text(d.key));
-    xyEnter
-        .merge(xyDiv)
-        .attr(
-            "transform",
-            `translate(${containerSize.width / 2}, ${containerSize.height / 2})`
-        )
-        .each(function (data) {
-            const xyElement = select(this);
-            xyScatterSeries()
-                .settings(settings)
-                .data([data])
-                .color(color)
-                .symbols(symbols)(xyElement);
-        });
+    if (legend) container.call(legend);
 }
 
 xyScatter.plugin = {

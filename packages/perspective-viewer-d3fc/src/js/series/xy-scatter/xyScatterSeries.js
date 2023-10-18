@@ -101,9 +101,14 @@ export default function xyScatterSeries() {
             .memoValue(settings.axisMemo[1])
             .valueName("y")(data);
 
+        const [xLabel, yLabel] =
+            settings.splitValues.length === 0
+                ? [settings.mainValues[0].name, settings.mainValues[1].name]
+                : ["", ""];
+
         const chart = chartCanvasFactory(xAxis, yAxis)
-            .xLabel("")
-            .yLabel("")
+            .xLabel(xLabel)
+            .yLabel(yLabel)
             .plotArea(withGridLines(series, settings).canvas(true));
 
         chart.xNice && chart.xNice();
