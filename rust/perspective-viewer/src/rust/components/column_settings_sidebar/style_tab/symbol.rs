@@ -13,18 +13,17 @@
 mod row_selector;
 mod symbol_pairs;
 mod symbol_selector;
+mod types;
 
 use std::rc::Rc;
 
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
 use yew::{html, Html, Properties};
 
-use crate::components::column_settings_sidebar::style_tab::symbol::symbol_pairs::{
-    KVPair, PairsList,
-};
+use self::types::{SymbolConfig, SymbolKVPair};
+use crate::components::column_settings_sidebar::style_tab::symbol::symbol_pairs::PairsList;
 use crate::components::style::LocalStyle;
-use crate::config::plugin::{PluginConfig, SymbolAttributes};
+use crate::config::plugin::{PluginConfig, Symbol, SymbolAttributes};
 use crate::config::Type;
 use crate::custom_elements::FilterDropDownElement;
 use crate::custom_events::CustomEvents;
@@ -32,6 +31,13 @@ use crate::model::UpdatePluginConfig;
 use crate::renderer::Renderer;
 use crate::session::Session;
 use crate::{css, derive_model, html_template};
+
+pub fn next_default_symbol(values: &Vec<Symbol>, pairs_len: usize) -> String {
+    values
+        .get(pairs_len % values.len())
+        .map(|s| s.name.clone())
+        .unwrap()
+}
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct SymbolAttrProps {
@@ -45,18 +51,12 @@ pub struct SymbolAttrProps {
 }
 derive_model!(CustomEvents, Session, Renderer for SymbolAttrProps);
 
-#[derive(Serialize, Deserialize)]
-struct SymbolConfig {
-    symbols: Vec<KVPair>,
-}
-
 pub enum SymbolAttrMsg {
-    UpdatePairs(Vec<KVPair>),
+    UpdatePairs(Vec<SymbolKVPair>),
 }
 
 pub struct SymbolAttr {
-    pairs: Vec<KVPair>,
-    all_symbol_names: Vec<String>,
+    pairs: Vec<SymbolKVPair>,
     row_dropdown: Rc<FilterDropDownElement>,
 }
 
@@ -66,7 +66,6 @@ impl yew::Component for SymbolAttr {
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         let p = ctx.props();
-        let all_symbol_names = p.attrs.symbols.iter().map(|s| s.name.clone()).collect_vec();
         let mut pairs = p
             .config
             .columns
@@ -74,14 +73,16 @@ impl yew::Component for SymbolAttr {
             .and_then(|json_val| {
                 serde_json::from_value::<SymbolConfig>(json_val.clone())
                     .ok()
-                    .map(|s| s.symbols)
+                    .map(|s| s.symbols.into_iter().map(|s| s.into()).collect_vec())
             })
             .unwrap_or_default();
-        pairs.push(KVPair::new(None, None));
+        pairs.push(SymbolKVPair::new(
+            None,
+            next_default_symbol(&p.attrs.symbols, pairs.len()),
+        ));
         let row_dropdown = Rc::new(FilterDropDownElement::new(p.session.clone()));
         Self {
             pairs,
-            all_symbol_names,
             row_dropdown,
         }
     }
@@ -91,9 +92,9 @@ impl yew::Component for SymbolAttr {
         match msg {
             SymbolAttrMsg::UpdatePairs(mut new_pairs) => {
                 let serialized = new_pairs
-                    .iter()
-                    .filter(|KVPair { key, .. }| key.is_some())
-                    .cloned()
+                    .clone()
+                    .into_iter()
+                    .filter_map(|pair| pair.try_into().ok())
                     .collect();
 
                 p.send_plugin_config(
@@ -109,7 +110,10 @@ impl yew::Component for SymbolAttr {
                     .map(|pair| pair.key.is_some())
                     .unwrap_or_default()
                 {
-                    new_pairs.push(KVPair::new(None, None))
+                    new_pairs.push(SymbolKVPair::new(
+                        None,
+                        next_default_symbol(&p.attrs.symbols, new_pairs.len()),
+                    ))
                 }
 
                 self.pairs = new_pairs;
@@ -120,7 +124,6 @@ impl yew::Component for SymbolAttr {
 
     fn view(&self, ctx: &yew::Context<Self>) -> Html {
         let update_pairs = ctx.link().callback(SymbolAttrMsg::UpdatePairs);
-        tracing::error!("{:?}", self.pairs);
         html_template! {
             <LocalStyle href={ css!("column-symbol-attributes") } />
             <PairsList
