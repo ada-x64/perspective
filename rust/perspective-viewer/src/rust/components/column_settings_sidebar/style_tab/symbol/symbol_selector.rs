@@ -45,8 +45,6 @@ pub fn symbol_selector(p: &SymbolSelectorProps) -> Html {
         .cloned()
         .unwrap_or_else(|| p.values.get(p.index % values.len()).cloned().unwrap());
 
-    tracing::error!("{}", selected);
-
     html! {
         // TODO: This probably should be a modal with a preview of the SVG symbol
         <Select<Symbol>

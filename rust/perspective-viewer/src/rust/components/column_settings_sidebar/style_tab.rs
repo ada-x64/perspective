@@ -16,13 +16,11 @@ mod symbol;
 use yew::{function_component, html, Html, Properties};
 
 use crate::components::column_settings_sidebar::style_tab::column_style::ColumnStyle;
-use crate::components::column_settings_sidebar::style_tab::symbol::SymbolAttr;
 use crate::config::plugin::{PluginAttributes, PluginConfig};
 use crate::config::Type;
 use crate::custom_events::CustomEvents;
 use crate::renderer::Renderer;
 use crate::session::Session;
-use crate::utils::JsValueSerdeExt;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct StyleTabProps {
