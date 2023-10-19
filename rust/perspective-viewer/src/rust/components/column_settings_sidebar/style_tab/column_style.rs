@@ -192,7 +192,7 @@ pub fn ColumnStyle(p: &ColumnStyleProps) -> Html {
 
             let zipped = ty.as_deref().zip(name.as_deref());
             match zipped {
-                Some(("Symbol", name)) if name == props.column_name => {
+                Some(("Symbol", name)) if name == props.column_name && p.ty == Type::String => {
                     let attrs = props.attrs.symbol.clone().unwrap();
                     is_symbol = true;
                     Some(html! {
