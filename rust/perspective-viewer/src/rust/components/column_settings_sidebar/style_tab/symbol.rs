@@ -23,7 +23,7 @@ use yew::{html, Html, Properties};
 use self::types::{SymbolConfig, SymbolKVPair};
 use crate::components::column_settings_sidebar::style_tab::symbol::symbol_pairs::PairsList;
 use crate::components::style::LocalStyle;
-use crate::config::plugin::{PluginConfig, Symbol, SymbolAttributes};
+use crate::config::plugin::{PluginConfig, Symbol};
 use crate::config::Type;
 use crate::custom_elements::FilterDropDownElement;
 use crate::custom_events::CustomEvents;
@@ -38,18 +38,24 @@ pub fn next_default_symbol(values: &Vec<Symbol>, pairs_len: usize) -> String {
         .map(|s| s.name.clone())
         .unwrap()
 }
-
 #[derive(Properties, PartialEq, Clone)]
 pub struct SymbolAttrProps {
     pub attr_type: Type,
-    pub attrs: SymbolAttributes,
     pub column_name: String,
-    pub config: PluginConfig,
     pub session: Session,
     pub renderer: Renderer,
     pub custom_events: CustomEvents,
 }
 derive_model!(CustomEvents, Session, Renderer for SymbolAttrProps);
+impl SymbolAttrProps {
+    pub fn get_config(&self) -> (PluginConfig, Vec<Symbol>) {
+        let (config, attrs) = self.get_plugin_config();
+        (
+            config.unwrap(),
+            attrs.and_then(|a| a.symbol.map(|s| s.symbols)).unwrap(),
+        )
+    }
+}
 
 pub enum SymbolAttrMsg {
     UpdatePairs(Vec<SymbolKVPair>),
@@ -66,8 +72,8 @@ impl yew::Component for SymbolAttr {
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         let p = ctx.props();
-        let mut pairs = p
-            .config
+        let (config, symbols) = ctx.props().get_config();
+        let mut pairs = config
             .columns
             .get(&p.column_name)
             .and_then(|json_val| {
@@ -76,9 +82,10 @@ impl yew::Component for SymbolAttr {
                     .map(|s| s.symbols.into_iter().map(|s| s.into()).collect_vec())
             })
             .unwrap_or_default();
+
         pairs.push(SymbolKVPair::new(
             None,
-            next_default_symbol(&p.attrs.symbols, pairs.len()),
+            next_default_symbol(&symbols, pairs.len()),
         ));
         let row_dropdown = Rc::new(FilterDropDownElement::new(p.session.clone()));
         Self {
@@ -110,9 +117,10 @@ impl yew::Component for SymbolAttr {
                     .map(|pair| pair.key.is_some())
                     .unwrap_or_default()
                 {
+                    let (_, symbols) = p.get_config();
                     new_pairs.push(SymbolKVPair::new(
                         None,
-                        next_default_symbol(&p.attrs.symbols, new_pairs.len()),
+                        next_default_symbol(&symbols, new_pairs.len()),
                     ))
                 }
 
@@ -124,6 +132,7 @@ impl yew::Component for SymbolAttr {
 
     fn view(&self, ctx: &yew::Context<Self>) -> Html {
         let update_pairs = ctx.link().callback(SymbolAttrMsg::UpdatePairs);
+        let (_, values) = ctx.props().get_config();
         html_template! {
             <LocalStyle href={ css!("column-symbol-attributes") } />
             <PairsList
@@ -131,7 +140,7 @@ impl yew::Component for SymbolAttr {
                 id="attributes-symbols"
                 pairs={ self.pairs.clone() }
                 row_dropdown={ self.row_dropdown.clone() }
-                values={ ctx.props().attrs.symbols.clone() }
+                { values }
                 column_name={ ctx.props().column_name.clone() }
                 { update_pairs }/>
         }

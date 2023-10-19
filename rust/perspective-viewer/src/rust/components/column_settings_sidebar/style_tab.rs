@@ -16,7 +16,6 @@ mod symbol;
 use yew::{function_component, html, Html, Properties};
 
 use crate::components::column_settings_sidebar::style_tab::column_style::ColumnStyle;
-use crate::config::plugin::{PluginAttributes, PluginConfig};
 use crate::config::Type;
 use crate::custom_events::CustomEvents;
 use crate::renderer::Renderer;
@@ -30,8 +29,6 @@ pub struct StyleTabProps {
 
     pub ty: Type,
     pub column_name: String,
-    pub config: PluginConfig,
-    pub attrs: PluginAttributes,
 }
 
 #[function_component]
@@ -45,8 +42,7 @@ pub fn StyleTab(p: &StyleTabProps) -> Html {
                     renderer={ p.renderer.clone() }
                     ty={ p.ty }
                     column_name={ p.column_name.clone() }
-                    config={ p.config.clone() }
-                    attrs={ p.attrs.clone() }/>
+                    />
             </div>
         </div>
     }
