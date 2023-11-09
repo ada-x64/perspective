@@ -203,6 +203,19 @@ impl SessionMetadata {
         })
     }
 
+    /// Creates a new column name by appending a numeral corresponding to the
+    /// number of columns with that name.
+    pub fn make_new_column_name(&self, col: Option<&str>) -> String {
+        let mut i = 0;
+        loop {
+            i += 1;
+            let name = format!("{} {i}", col.unwrap_or("New Column"));
+            if self.get_column_table_type(&name).is_none() {
+                return name;
+            }
+        }
+    }
+
     pub fn get_edit_port(&self) -> Option<f64> {
         self.as_ref().map(|meta| meta.edit_port)
     }
@@ -216,13 +229,11 @@ impl SessionMetadata {
     /// - `name` The column name (or expresison alias) to retrieve a principal
     ///   type.
     pub fn get_column_table_type(&self, name: &str) -> Option<Type> {
-        maybe!({
-            let meta = self.as_ref()?;
-            meta.table_schema
-                .get(name)
-                .or_else(|| meta.expr_meta.as_ref()?.schema.get(name))
-                .cloned()
-        })
+        let meta = self.as_ref()?;
+        meta.table_schema
+            .get(name)
+            .or_else(|| meta.expr_meta.as_ref()?.schema.get(name))
+            .cloned()
     }
 
     /// Returns the type of a column name relative to the `View`, including

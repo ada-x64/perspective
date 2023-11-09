@@ -43,17 +43,6 @@ pub struct ExpressionEditorProps {
     pub disabled: bool,
 }
 
-pub fn get_new_column_name(session: &Session) -> String {
-    let mut i = 0;
-    loop {
-        i += 1;
-        let name = format!("New Column {i}");
-        if session.metadata().get_column_table_type(&name).is_none() {
-            return name;
-        }
-    }
-}
-
 impl ExpressionEditorProps {
     fn initial_expr(&self) -> Rc<String> {
         self.old_alias
@@ -79,13 +68,11 @@ impl Component for ExpressionEditor {
     type Properties = ExpressionEditorProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        let mut alias = ctx.props().old_alias.clone();
-        if alias.is_none() {
-            alias = Some(get_new_column_name(&ctx.props().session));
-        } else if let Some(alias2) = &alias && alias2 == &*ctx.props().initial_expr() {
-            alias = None;
-        }
-
+        let alias = ctx
+            .props()
+            .old_alias
+            .clone()
+            .or_else(|| Some(ctx.props().session.metadata().make_new_column_name(None)));
         Self {
             save_enabled: false,
             edit_enabled: false,
@@ -288,7 +275,7 @@ impl Component for ExpressionEditor {
             .props()
             .old_alias
             .clone()
-            .or_else(|| Some(get_new_column_name(&ctx.props().session)));
+            .or_else(|| Some(ctx.props().session.metadata().make_new_column_name(None)));
         true
     }
 }

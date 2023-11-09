@@ -18,7 +18,6 @@ use crate::components::column_settings_sidebar::attributes_tab::AttributesTab;
 use crate::components::column_settings_sidebar::style_tab::StyleTab;
 use crate::components::containers::sidebar::Sidebar;
 use crate::components::containers::tablist::{Tab, TabList};
-use crate::components::expression_editor::get_new_column_name;
 use crate::components::style::LocalStyle;
 use crate::components::viewer::ColumnLocator;
 use crate::config::Type;
@@ -65,7 +64,7 @@ impl PartialEq for ColumnSettingsProps {
 pub fn ColumnSettingsSidebar(p: &ColumnSettingsProps) -> Html {
     let column_name = match p.selected_column.clone() {
         ColumnLocator::Expr(Some(name)) | ColumnLocator::Plain(name) => name,
-        ColumnLocator::Expr(None) => get_new_column_name(&p.session),
+        ColumnLocator::Expr(None) => p.session.metadata().make_new_column_name(None),
     };
 
     let column_type = p.session.metadata().get_column_view_type(&column_name);
