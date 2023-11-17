@@ -101,9 +101,8 @@ pub fn ColumnSettingsSidebar(p: &ColumnSettingsProps) -> Html {
     {
         tabs.push(ColumnSettingsTab::Style);
     }
-    if matches!(p.selected_column, ColumnLocator::Expr(_)) {
-        tabs.push(ColumnSettingsTab::Attributes);
-    }
+
+    tabs.push(ColumnSettingsTab::Attributes);
 
     let match_fn = {
         clone!(
