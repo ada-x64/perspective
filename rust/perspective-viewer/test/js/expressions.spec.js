@@ -157,7 +157,10 @@ test.describe("Expressions", () => {
         ]);
     });
 
-    test("Should overwrite a duplicate expression alias", async ({ page }) => {
+    // No longer relevant as we cannot save a duplicate identifier
+    test.skip("Should overwrite a duplicate expression alias", async ({
+        page,
+    }) => {
         let view = new PageView(page);
         view.restore({ expressions: { "4 + 5": "3 + 4" } });
 
@@ -173,7 +176,8 @@ test.describe("Expressions", () => {
         ]);
     });
 
-    test("Should overwrite a duplicate expression", async ({ page }) => {
+    // No longer relevant as we cannot save a duplicate identifier
+    test.skip("Should overwrite a duplicate expression", async ({ page }) => {
         let view = new PageView(page);
         view.restore({ expressions: { "3 + 4": "3 + 4" } });
         await view.settingsPanel.createNewExpression("", "3 + 4", true);

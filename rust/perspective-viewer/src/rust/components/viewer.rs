@@ -109,7 +109,6 @@ pub enum PerspectiveViewerMsg {
         sender: Option<Sender<()>>,
         toggle: bool,
     },
-    SelectedColumnActiveState(bool),
 }
 
 pub struct PerspectiveViewer {
@@ -139,16 +138,12 @@ impl Component for PerspectiveViewer {
             .callback(|()| PerspectiveViewerMsg::PreloadFontsUpdate);
 
         let session_sub = {
-            clone!(ctx.props().session, ctx.props().presentation);
+            clone!(ctx.props().presentation);
             let callback = ctx.link().batch_callback(move |(update, x)| {
                 if update {
                     vec![PerspectiveViewerMsg::RenderLimits(Some(x))]
                 } else {
                     let locator = presentation.get_open_column_settings().locator;
-                    let is_active = locator
-                        .as_ref()
-                        .map(|l| l.is_active(&session))
-                        .unwrap_or_default();
                     vec![
                         PerspectiveViewerMsg::RenderLimits(Some(x)),
                         PerspectiveViewerMsg::OpenColumnSettings {
@@ -156,7 +151,6 @@ impl Component for PerspectiveViewer {
                             sender: None,
                             toggle: false,
                         },
-                        PerspectiveViewerMsg::SelectedColumnActiveState(is_active),
                     ]
                 }
             });
@@ -273,6 +267,12 @@ impl Component for PerspectiveViewer {
                 sender,
                 toggle,
             } => {
+                let is_active = locator
+                    .as_ref()
+                    .map(|l| l.is_active(&ctx.props().session))
+                    .unwrap_or_default();
+                self.selected_column_is_active = is_active;
+
                 if toggle && self.selected_column == locator {
                     self.selected_column = None;
                     (false, None)
@@ -298,11 +298,6 @@ impl Component for PerspectiveViewer {
                     sender.send(()).unwrap();
                 }
                 true
-            },
-            PerspectiveViewerMsg::SelectedColumnActiveState(active) => {
-                let rerender = self.selected_column_is_active != active;
-                self.selected_column_is_active = active;
-                rerender
             },
             PerspectiveViewerMsg::SettingsPanelSizeUpdate(Some(x)) => {
                 self.settings_panel_width_override = Some(x);

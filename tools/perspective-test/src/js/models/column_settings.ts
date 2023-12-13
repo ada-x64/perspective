@@ -20,6 +20,7 @@ export class ColumnSettingsSidebar {
     styleTab: StyleTab;
     closeBtn: Locator;
     tabTitle: Locator;
+    nameInputWrapper: Locator;
     nameInput: Locator;
 
     constructor(view: PageView) {
@@ -31,6 +32,9 @@ export class ColumnSettingsSidebar {
         this.closeBtn = viewer.locator("#column_settings_close_button");
         this.tabTitle = view.container.locator(
             ".tab:not(.tab-padding) .tab-title"
+        );
+        this.nameInputWrapper = view.container.locator(
+            ".sidebar_header_contents"
         );
         this.nameInput = view.container.locator("input.sidebar_header_title");
     }
@@ -47,10 +51,22 @@ export class ColumnSettingsSidebar {
 export class AttributesTab {
     container: Locator;
     expressionEditor: ExpressionEditor;
+    saveBtn: Locator;
+    resetBtn: Locator;
+    deleteBtn: Locator;
 
     constructor(parent: Locator) {
         this.container = parent.locator("#attributes-tab");
         this.expressionEditor = new ExpressionEditor(this.container);
+        this.saveBtn = this.container.locator(
+            "#psp-expression-editor-button-save"
+        );
+        this.resetBtn = this.container.locator(
+            "#psp-expression-editor-button-reset"
+        );
+        this.deleteBtn = this.container.locator(
+            "#psp-expression-editor-button-delete"
+        );
     }
 }
 
@@ -58,23 +74,11 @@ export class ExpressionEditor {
     container: Locator;
     content: Locator;
     textarea: Locator;
-    saveBtn: Locator;
-    resetBtn: Locator;
-    deleteBtn: Locator;
 
     constructor(parent: Locator) {
         this.container = parent.locator("#editor-container");
         this.content = this.container.locator("#content");
         this.textarea = this.container.locator("textarea");
-        this.saveBtn = this.container.locator(
-            "#psp-expression-editor-button-save"
-        );
-        this.resetBtn = this.container.locator(
-            "#psp-expression-editor-button-reset"
-        );
-        this.saveBtn = this.container.locator(
-            "#psp-expression-editor-button-delete"
-        );
     }
 }
 

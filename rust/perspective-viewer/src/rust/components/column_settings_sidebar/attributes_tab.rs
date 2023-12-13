@@ -10,47 +10,26 @@
 // ┃ of the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-mod expression_editor;
+use yew::{function_component, html, Html, Properties};
 
-use std::rc::Rc;
+use super::save_settings::{SaveSettings, SaveSettingsProps};
+use crate::components::expression_editor::{ExpressionEditor, ExpressionEditorProps};
 
-use expression_editor::ExprEditorAttr;
-use yew::{function_component, html, Callback, Html, Properties};
-
-use crate::components::viewer::ColumnLocator;
-use crate::custom_events::CustomEvents;
-use crate::presentation::Presentation;
-use crate::renderer::Renderer;
-use crate::session::Session;
-use crate::{derive_model, html_template};
-
-#[derive(PartialEq, Clone, Properties)]
+#[derive(PartialEq, Properties, Clone)]
 pub struct AttributesTabProps {
-    pub header_value: Option<String>,
-    pub selected_column: ColumnLocator,
-    pub on_close: Callback<()>,
-    pub session: Session,
-    pub renderer: Renderer,
-    pub presentation: Presentation,
-    pub custom_events: CustomEvents,
-    pub on_input: Callback<Rc<String>>,
+    pub expr_editor: ExpressionEditorProps,
+    pub save_section: SaveSettingsProps,
 }
-derive_model!(Session, Renderer, Presentation for AttributesTabProps);
 
 #[function_component]
 pub fn AttributesTab(p: &AttributesTabProps) -> Html {
-    html_template! {
+    html! {
         <div id="attributes-tab">
+            <div class="tab-section" id="attributes-expr">
+                <ExpressionEditor ..p.expr_editor.clone() />
+            </div>
             <div class="tab-section">
-                <ExprEditorAttr
-                    on_close={p.on_close.clone()}
-                    header_value={p.header_value.clone()}
-                    selected_column={p.selected_column.clone()}
-                    session={p.session.clone()}
-                    renderer={p.renderer.clone()}
-                    on_input={p.on_input.clone()}
-                    presentation={p.presentation.clone()}
-                />
+                <SaveSettings ..p.save_section.clone() />
             </div>
         </div>
     }

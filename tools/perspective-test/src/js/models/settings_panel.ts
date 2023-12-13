@@ -93,7 +93,7 @@ export class SettingsPanel {
      * @param expr
      */
     async renameExpression(column: ColumnSelector, name: string) {
-        this.pageView.assureColumnSettingsOpen(column);
+        await this.pageView.assureColumnSettingsOpen(column);
         let sidebar = this.pageView.columnSettingsSidebar;
         await sidebar.nameInput.waitFor({
             state: "visible",
@@ -103,11 +103,13 @@ export class SettingsPanel {
         await sidebar.nameInput.focus();
         await sidebar.nameInput.clear();
         await sidebar.nameInput.type(name, { delay: 100 });
-        await sidebar.nameInput.press("Enter");
+
+        await expect(sidebar.attributesTab.saveBtn).toBeEnabled();
+        await sidebar.attributesTab.saveBtn.click();
     }
 
     async editExpression(column: ColumnSelector, newExpression: string) {
-        this.pageView.assureColumnSettingsOpen(column);
+        await this.pageView.assureColumnSettingsOpen(column);
         let sidebar = this.pageView.columnSettingsSidebar;
         await sidebar.openTab("Attributes");
         let exprEditor = sidebar.attributesTab.expressionEditor;
@@ -188,6 +190,7 @@ export class SettingsPanel {
 
 export class ColumnSelector {
     active: boolean;
+    activeBtn: Locator;
     name: Locator;
     container: Locator;
     editBtn: Locator;
@@ -199,6 +202,7 @@ export class ColumnSelector {
         this.name = container.locator("div .column_name");
         this.aggSelector = container.locator("select");
         this.editBtn = container.locator("div .expression-edit-button");
+        this.activeBtn = container.locator(".is_column_active");
     }
 }
 

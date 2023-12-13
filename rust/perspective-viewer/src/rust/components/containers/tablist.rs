@@ -16,8 +16,7 @@ use crate::components::style::LocalStyle;
 use crate::{clone, css, html_template};
 
 pub trait Tab: PartialEq + std::fmt::Display + Clone + Default + 'static {}
-impl Tab for String {}
-impl Tab for &'static str {}
+impl<T: PartialEq + std::fmt::Display + Clone + Default + 'static> Tab for T {}
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct TabListProps<T: Tab> {
